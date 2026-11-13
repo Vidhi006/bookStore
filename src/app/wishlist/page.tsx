@@ -1,27 +1,34 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { HeartFilled } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import { useBookStore } from '@/context/BookStoreContext';
 import { StoreShell } from '@/components/site/StoreShell';
 import { formatPrice } from '@/components/site/SiteBookCard';
 
 export default function WishlistPage() {
-  const { user, wishlist, books, toggleWishlist, addToCart, isInWishlist } = useBookStore();
+  const { user, wishlist, books, toggleWishlist } = useBookStore();
   const items = books.filter((book) => wishlist.has(book.id));
 
   if (!user) {
     return (
       <StoreShell crumbs={[{ label: 'My Wishlist' }]}>
         <div className="site-container login-required">
-          <div className="login-required__icon">
-            <HeartFilled />
-          </div>
           <h1 className="login-required__title">PLEASE LOG IN</h1>
           <p className="login-required__text">Login to view items in your wishlist.</p>
+          <div className="login-required__icon">
+            <Image
+              src="/wishlist-login.png"
+              alt=""
+              width={67}
+              height={73}
+              priority
+            />
+          </div>
           <div className="login-required__action">
-            <Link href="/login" className="btn btn--outline" style={{ padding: '0 22px', height: 33 }}>
+            <Link href="/login" className="btn btn--outline">
               LOGIN/SIGNUP
             </Link>
           </div>
@@ -32,26 +39,28 @@ export default function WishlistPage() {
 
   return (
     <StoreShell crumbs={[{ label: 'My Wishlist' }]}>
-      <div className="site-container list-page">
-        <h1 className="list-page__title">My Wishlist ({String(items.length).padStart(2, '0')})</h1>
+      <div className="site-container wishlist-page">
+        <section className="wishlist-panel">
+          <h1 className="wishlist-panel__heading">
+            My Wishlist ({String(items.length).padStart(2, '0')})
+          </h1>
 
-        {items.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state__title">Your wishlist is empty</div>
-            <div className="empty-state__text">Tap the heart on any book to save it for later.</div>
-            <Link href="/" className="btn btn--maroon">
-              Browse books
-            </Link>
-          </div>
-        ) : (
-          <div>
-            {items.map((book) => (
-              <div className="wishlist-item" key={book.id}>
+          {items.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state__title">Your wishlist is empty</div>
+              <div className="empty-state__text">Tap the heart on any book to save it for later.</div>
+              <Link href="/" className="btn btn--maroon">
+                Browse books
+              </Link>
+            </div>
+          ) : (
+            items.map((book) => (
+              <article className="wishlist-item" key={book.id}>
                 <Link href={`/books/${book.id}`} className="wishlist-item__thumb">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={book.coverImage} alt={book.title} />
                 </Link>
-                <div>
+                <div className="wishlist-item__details">
                   <Link href={`/books/${book.id}`} className="wishlist-item__title">
                     {book.title}
                   </Link>
@@ -63,28 +72,19 @@ export default function WishlistPage() {
                     ) : null}
                   </div>
                 </div>
-                <div className="wishlist-item__actions">
-                  <button
-                    type="button"
-                    className="btn btn--maroon btn--sm"
-                    disabled={book.stock <= 0}
-                    onClick={() => addToCart(book)}
-                  >
-                    Add to bag
-                  </button>
-                  <button
-                    type="button"
-                    className="text-link"
-                    style={{ fontSize: 12 }}
-                    onClick={() => toggleWishlist(book.id)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                <button
+                  type="button"
+                  className="wishlist-item__remove"
+                  onClick={() => toggleWishlist(book.id)}
+                  aria-label={`Remove ${book.title} from wishlist`}
+                  title="Remove from wishlist"
+                >
+                  <DeleteOutlined />
+                </button>
+              </article>
+            ))
+          )}
+        </section>
       </div>
     </StoreShell>
   );

@@ -61,7 +61,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ next = '/'
   };
 
   return (
-    <div className="auth-social">
+    <div className="auth-social auth-social--reference">
       <button
         type="button"
         className="auth-social__btn auth-social__btn--google"
@@ -69,7 +69,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ next = '/'
         disabled={redirecting}
       >
         <GoogleIcon />
-        {redirecting ? 'Redirecting…' : 'Continue with Google'}
+        {redirecting ? 'Redirecting…' : 'Google'}
       </button>
     </div>
   );

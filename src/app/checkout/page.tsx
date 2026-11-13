@@ -93,9 +93,9 @@ export default function CheckoutPage() {
 
   return (
     <StoreShell crumbs={[{ label: 'My cart', href: '/cart' }, { label: 'Checkout' }]}>
-      <div className="site-container">
+      <div className="site-container checkout-page">
         <CheckoutSteps current={stage} />
-        <div className="cart-head">
+        <div className="cart-head checkout-page__title">
           <h1 className="cart-head__title">Checkout</h1>
         </div>
 
@@ -108,7 +108,7 @@ export default function CheckoutPage() {
           </div>
         ) : stage === 'address' ? (
           <>
-            <section>
+            <section className="checkout-section">
               <h2 className="cart-section-title">Customer Details</h2>
               <div className="cart-address" style={{ borderBottom: 0 }}>
                 <div>
@@ -122,7 +122,7 @@ export default function CheckoutPage() {
               </div>
             </section>
 
-            <section>
+            <section className="checkout-section">
               <h2 className="cart-section-title">Delivery Address</h2>
               {delivery ? (
                 <div className="checkout-delivery-card">
@@ -170,7 +170,7 @@ export default function CheckoutPage() {
           </>
         ) : (
           <>
-            <section>
+            <section className="checkout-section">
               <h2 className="cart-section-title">Delivery Address</h2>
               {delivery ? (
                 <div className="checkout-delivery-card">
@@ -193,7 +193,7 @@ export default function CheckoutPage() {
               ) : null}
             </section>
 
-            <section>
+            <section className="checkout-section">
               <h2 className="cart-section-title">Order summary</h2>
               <div className="order-summary">
                 {cart.map(({ book, quantity }) => (

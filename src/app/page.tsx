@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Spin } from 'antd';
 import { useBookStore } from '@/context/BookStoreContext';
 import { StoreShell } from '@/components/site/StoreShell';
@@ -11,7 +10,7 @@ const PAGE_SIZE = 12;
 const PAGE_WINDOW = 4;
 
 export default function HomePage() {
-  const { filteredBooks, catalogLoading, filters, setFilters, user } = useBookStore();
+  const { filteredBooks, catalogLoading, filters, setFilters } = useBookStore();
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -59,32 +58,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="home-welcome">
-          {user ? (
-            <>
-              <span className="home-welcome__hello">Hello {user.name.split(' ')[0]},</span>
-              <span>
-                <Link href="/orders" className="text-link">
-                  My Orders
-                </Link>
-                <span style={{ margin: '0 10px', color: '#dcdcdc' }}>|</span>
-                <Link href="/wishlist" className="text-link">
-                  Wishlist
-                </Link>
-              </span>
-            </>
-          ) : (
-            <>
-              <span>
-                <span className="home-welcome__hello">Welcome</span> — to access your account and manage orders
-              </span>
-              <Link href="/login" className="text-link">
-                LOGIN/SIGNUP
-              </Link>
-            </>
-          )}
-        </div>
-
         {catalogLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '90px 0' }}>
             <Spin size="large" />
@@ -95,7 +68,7 @@ export default function HomePage() {
             <div className="empty-state__text">Try a different search or filter.</div>
           </div>
         ) : (
-          <div className="book-grid">
+          <div className="book-grid book-grid--home">
             {visible.map((book) => (
               <SiteBookCard key={book.id} book={book} />
             ))}

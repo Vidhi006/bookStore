@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AuthLayout } from '@/components/site/AuthLayout';
 import { useBookStore } from '@/context/BookStoreContext';
 
 export default function ForgotPasswordPage() {
@@ -34,60 +34,77 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout>
-      <Link href="/login" className="auth-back">
-        ← Back to Login
-      </Link>
-      <h1 style={{ fontSize: 25, fontWeight: 500, marginBottom: 12 }}>
-        {step === 1 ? 'Forgot your Password?' : 'Reset your Password'}
-      </h1>
-      <p style={{ fontSize: 15, color: '#878787', lineHeight: 1.35, marginBottom: 18 }}>
-        {step === 1
-          ? "Enter your email address and we'll send you a code to reset your password."
-          : 'Enter the code we emailed you along with your new password.'}
-      </p>
+    <main className="forgot-password-page">
+      <div className="forgot-password-canvas">
+        <header className="forgot-password-header">
+          <Link href="/" className="forgot-password-brand" aria-label="Bookstore home">
+            <Image src="/book-logo.png" alt="" width={18} height={14} priority />
+            <span>Bookstore</span>
+          </Link>
+        </header>
 
-      <form className="auth-form" onSubmit={submit}>
-        <div className="field">
-          <label>Email Id</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            readOnly={step === 2}
-          />
-        </div>
+        <section className="forgot-password-content">
+          <h1>{step === 1 ? 'Forgot Your Password?' : 'Reset Your Password'}</h1>
+          <div className="forgot-password-card">
+            <div className="forgot-password-card__body">
+              <p>
+                {step === 1
+                  ? "Enter your email address and we'll send you a code to reset your password."
+                  : 'Enter the code we emailed you along with your new password.'}
+              </p>
 
-        {step === 2 && (
-          <>
-            <div className="field">
-              <label>Reset code</label>
-              <input value={code} onChange={(event) => setCode(event.target.value)} required />
+              <form className="forgot-password-form" onSubmit={submit}>
+                <div className="field">
+                  <label htmlFor="forgot-email">Email Id</label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                    readOnly={step === 2}
+                  />
+                </div>
+
+                {step === 2 && (
+                  <>
+                    <div className="field">
+                      <label htmlFor="forgot-code">Reset code</label>
+                      <input
+                        id="forgot-code"
+                        value={code}
+                        onChange={(event) => setCode(event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="forgot-new-password">New password</label>
+                      <input
+                        id="forgot-new-password"
+                        type="password"
+                        value={newPassword}
+                        onChange={(event) => setNewPassword(event.target.value)}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {error && <p className="forgot-password-error" role="alert">{error}</p>}
+
+                <button type="submit" className="forgot-password-submit" disabled={loading}>
+                  {loading ? 'Please wait…' : step === 1 ? 'Reset Password' : 'Save New Password'}
+                </button>
+              </form>
             </div>
-            <div className="field">
-              <label>New password</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                required
-                minLength={6}
-              />
+
+            <div className="forgot-password-card__footer">
+              <Link href="/signup">Create Account</Link>
             </div>
-          </>
-        )}
-
-        {error && <p style={{ color: '#a03037', fontSize: 11 }}>{error}</p>}
-
-        <button type="submit" className="btn btn--maroon btn--block auth-form__submit" disabled={loading}>
-          {loading ? 'Please wait…' : step === 1 ? 'Reset Password' : 'Save New Password'}
-        </button>
-      </form>
-
-      <div className="auth-card__footer">
-        <Link href="/signup">Create Account</Link>
+          </div>
+        </section>
       </div>
-    </AuthLayout>
+    </main>
   );
 }

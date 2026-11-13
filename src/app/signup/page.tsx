@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AuthLayout } from '@/components/site/AuthLayout';
-import { SocialAuthButtons } from '@/components/site/SocialAuthButtons';
 import { useBookStore } from '@/context/BookStoreContext';
 
 export default function SignupPage() {
@@ -39,40 +38,30 @@ export default function SignupPage() {
 
   return (
     <AuthLayout mode="signup">
-      <header className="auth-heading">
-        <h1>Create account</h1>
-        <p>It only takes a minute.</p>
+      <header>
+        <nav className="auth-mode-tabs" aria-label="Account access">
+          <Link href="/login">LOGIN</Link>
+          <h1 aria-current="page">SIGNUP</h1>
+        </nav>
       </header>
-      <form className="auth-form" onSubmit={submit}>
+      <form className="auth-form auth-form--reference" onSubmit={submit}>
         <div className="field">
-          <label htmlFor="signup-name">Full name</label>
+          <label htmlFor="signup-name">Full Name</label>
           <input
             id="signup-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Enter your full name"
             required={!needsVerify}
           />
         </div>
         <div className="field">
-          <label htmlFor="signup-email">Email address</label>
+          <label htmlFor="signup-email">Email Id</label>
           <input
             id="signup-email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
             required={!needsVerify}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="signup-mobile">Mobile number</label>
-          <input
-            id="signup-mobile"
-            type="tel"
-            value={mobile}
-            onChange={(event) => setMobile(event.target.value)}
-            placeholder="10-digit mobile number"
           />
         </div>
         <div className="field">
@@ -83,32 +72,48 @@ export default function SignupPage() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="At least 6 characters"
               required={!needsVerify}
               minLength={6}
             />
-            <button type="button" onClick={() => setShowPassword((shown) => !shown)}>
-              {showPassword ? 'Hide' : 'Show'}
+            <button
+              type="button"
+              onClick={() => setShowPassword((shown) => !shown)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z" />
+                <circle cx="12" cy="12" r="2.5" />
+              </svg>
             </button>
           </div>
+        </div>
+        <div className="field">
+          <label htmlFor="signup-mobile">Mobile Number</label>
+          <input
+            id="signup-mobile"
+            type="tel"
+            value={mobile}
+            onChange={(event) => setMobile(event.target.value)}
+          />
         </div>
 
         {needsVerify && (
           <div className="field">
-            <label>Verification code</label>
+            <label htmlFor="signup-code">Verification code</label>
             <input
+              id="signup-code"
               value={code}
               onChange={(event) => setCode(event.target.value)}
-              placeholder="6-digit code"
               required
             />
           </div>
         )}
 
-        {error && <p style={{ color: '#a03037', fontSize: 11 }}>{error}</p>}
+        {error && <p className="auth-error--reference" role="alert">{error}</p>}
 
         <button type="submit" className="btn btn--maroon btn--block auth-form__submit" disabled={loading}>
-          {loading ? 'Please wait…' : needsVerify ? 'Verify Email' : 'Create account'}
+          {loading ? 'Please wait…' : needsVerify ? 'Verify Email' : 'Signup'}
         </button>
       </form>
 
@@ -117,13 +122,6 @@ export default function SignupPage() {
           Check your email for the 6-digit verification code and enter it above.
         </div>
       )}
-
-      <div className="auth-divider">OR</div>
-      <SocialAuthButtons />
-
-      <div className="auth-card__footer">
-        Already a member? <Link href="/login">Login</Link>
-      </div>
     </AuthLayout>
   );
 }

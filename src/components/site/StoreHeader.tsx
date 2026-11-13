@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Dropdown, MenuProps } from 'antd';
 import {
@@ -95,11 +96,9 @@ export const StoreHeader: React.FC = () => {
       <div className="site-container store-header__inner">
         <Link href="/" className="brand" aria-label="Bookstore home">
           <span className="brand__icon" aria-hidden="true">
-            <span />
-            <span />
-            <span />
+            <Image src="/book-logo.png" alt="" width={32} height={24} />
           </span>
-          bookstore
+          Bookstore
         </Link>
 
         <form className="header-search" onSubmit={submitSearch}>

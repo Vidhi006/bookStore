@@ -96,9 +96,11 @@ export default function LoginPage() {
 
   return (
     <AuthLayout mode="login">
-      <header className="auth-heading">
-        <h1>Login</h1>
-        <p>Welcome back! Sign in to your account.</p>
+      <header>
+        <nav className="auth-mode-tabs" aria-label="Account access">
+          <h1 aria-current="page">LOGIN</h1>
+          <Link href="/signup">SIGNUP</Link>
+        </nav>
       </header>
       {socialError && (
         <p className="auth-social-error" role="alert">
@@ -106,9 +108,9 @@ export default function LoginPage() {
         </p>
       )}
 
-      <form className="auth-form" onSubmit={submit}>
+      <form className="auth-form auth-form--reference login-auth-form" onSubmit={submit}>
         <div className="field">
-          <label htmlFor="login-email">Email address</label>
+          <label htmlFor="login-email">Email Id</label>
           <input
             id="login-email"
             type="email"
@@ -126,19 +128,27 @@ export default function LoginPage() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter your password"
               required={!needsVerify}
             />
-            <button type="button" onClick={() => setShowPassword((shown) => !shown)}>
-              {showPassword ? 'Hide' : 'Show'}
+            <button
+              type="button"
+              onClick={() => setShowPassword((shown) => !shown)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z" />
+                <circle cx="12" cy="12" r="2.5" />
+              </svg>
             </button>
           </div>
         </div>
 
         {needsVerify && (
           <div className="field">
-            <label>Verification code</label>
+            <label htmlFor="login-code">Verification code</label>
             <input
+              id="login-code"
               value={code}
               onChange={(event) => setCode(event.target.value)}
               placeholder="6-digit code"
@@ -151,18 +161,15 @@ export default function LoginPage() {
           Forgot Password?
         </Link>
 
-        {error && <p style={{ color: '#a03037', fontSize: 11 }}>{error}</p>}
+        {error && <p className="auth-error--reference" role="alert">{error}</p>}
 
         <button type="submit" className="btn btn--maroon btn--block auth-form__submit" disabled={loading}>
           {loading ? 'Please wait…' : needsVerify ? 'Verify Email' : 'Login'}
         </button>
       </form>
 
-      <div className="auth-divider">OR</div>
+      <div className="auth-divider auth-divider--reference">OR</div>
       <SocialAuthButtons next={nextPath} />
-      <div className="auth-card__footer">
-        New to Bookstore? <Link href="/signup">Create an account</Link>
-      </div>
     </AuthLayout>
   );
 }
