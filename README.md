@@ -148,18 +148,3 @@ git commit -m "feat(cart): add cart drawer with undo stack"
 git checkout develop
 git merge feature/cart-wishlist
 ```
-
----
-
-## ☁️ Deploying to Vercel
-
-1. Push your repository to GitHub:
-   ```bash
-   git remote add origin https://github.com/<your-username>/bookstore-app.git
-   git branch -M main
-   git push -u origin main
-   ```
-2. Go to [https://vercel.com](https://vercel.com) and log in with GitHub.
-3. Click **Add New...** -> **Project**.
-4. Select `bookstore-app` and click **Deploy**.
-5. Vercel will automatically build the project and assign a production URL!
