@@ -1,0 +1,472 @@
+BOOKHAVEN PROJECT GUIDE
+======================
+
+Purpose
+-------
+This guide is for someone opening BookHaven for the first time. It explains
+what the application does, how its parts communicate, how to run it locally,
+and what the main user flows do. It describes the current code, including
+important limitations; it is not a promise that every storefront feature is
+production-ready.
+
+
+1. WHAT THIS PROJECT IS
+-----------------------
+BookHaven is a bookstore web application. A visitor can browse a small
+curated inventory, search and filter it, save books to a wishlist, and put
+books in a cart. There is also a separate public-literature catalog using
+Gutendex, Open Library, or Google Books.
+
+The application has a user-registration and email-verification flow, a
+password-reset flow, and a basic store-management screen. User accounts,
+curated books, and orders are stored in MongoDB. The cart and wishlist are
+saved in the browser's local storage.
+
+Important: checkout records an order; it does not collect money. There is no
+payment processor, shipping integration, or production-ready access-control
+system in this project yet.
+
+
+2. TECHNOLOGIES, IN PLAIN LANGUAGE
+----------------------------------
+Next.js 14
+  The web framework. It serves the pages and runs the API endpoints.
+
+React 18
+  The library used to build the interactive user interface.
+
+TypeScript
+  JavaScript with type checking. It helps catch certain mistakes before the
+  application runs.
+
+Ant Design
+  The UI component library used for forms, buttons, dialogs, tables, and
+  notifications.
+
+MongoDB and Mongoose
+  MongoDB stores application records. Mongoose defines the data models and
+  communicates with the database.
+
+Resend
+  An email delivery service used by the server to send verification and
+  password-reset codes. The Resend SDK is already a project dependency.
+
+JSON Web Tokens (JWT)
+  A signed token is created after successful login or email verification.
+  The browser stores it and sends it to certain API requests.
+
+Browser local storage
+  A small storage area in the visitor's browser. This app uses it for the
+  current user/token, cart, and wishlist. It is not the database.
+
+Public book APIs
+  Gutendex, Open Library, and Google Books supply searchable catalog results.
+  These are external services and their availability is outside this app's
+  control.
+
+
+3. HOW THE APP IS ORGANIZED
+---------------------------
+The main request path is:
+
+  Browser page/component
+      |
+      | fetch('/api/...')
+      v
+  Next.js API route
+      |
+      +--> library code (business logic, email, JWT, data mapping)
+      |
+      +--> MongoDB models / MongoDB
+      |
+      +--> Resend or an external book catalog API
+
+The key folders and files are:
+
+  src/app/
+    Next.js pages, shared page layout, CSS, and API routes.
+
+  src/app/page.tsx
+    Main bookstore page. It switches between the curated store, public
+    archive, and dashboard views.
+
+  src/app/books/page.tsx
+    Separate page for the public archive.
+
+  src/app/api/
+    Server-side endpoints. The browser calls these endpoints rather than
+    connecting directly to MongoDB or Resend.
+
+  src/components/
+    Visible pieces of the interface, such as the navbar, book cards, cart,
+    checkout form, authentication dialog, archive, and dashboard.
+
+  src/context/BookStoreContext.tsx
+    Shared browser-side application state and actions. Components use this
+    context to access books, cart, wishlist, orders, login, and navigation.
+
+  src/lib/
+    Shared server-side helpers:
+      authStore.ts - account, verification, reset, and purchase operations
+      resend.ts    - sends verification and reset emails using Resend
+      mongodb.ts   - opens/reuses the MongoDB connection
+      jwt.ts       - signs and verifies JWTs
+      mappers.ts   - converts database records to API/UI data shapes
+
+  src/models/
+    Mongoose schemas for User, Book, and Order records.
+
+  src/data/initialBooks.ts
+    Starter curated bookstore inventory. The books API inserts these into
+    MongoDB when the books collection is empty.
+
+  src/types/index.ts
+    Shared TypeScript data types.
+
+  docs/
+    Existing project documents (requirements, user stories, sprint plan,
+    Git guide, and deployment guide).
+
+  .env.example
+    Names and sample formats for environment variables. It is an example,
+    not a place to put real credentials.
+
+  .env.local
+    Local secrets and settings. This file should stay on your machine and is
+    ignored by Git. Never paste API keys or database passwords into chat,
+    source code, screenshots, or commits.
+
+
+4. RUNNING THE APPLICATION ON YOUR COMPUTER
+-------------------------------------------
+Prerequisites:
+  - Node.js and npm installed.
+  - MongoDB running locally, or a MongoDB Atlas database.
+  - A Resend account/API key if you want real verification/reset emails.
+
+Steps:
+  1. Open a terminal in the project folder (the folder containing
+     package.json).
+  2. Install project dependencies:
+       npm install
+  3. Check that .env.local exists. Do not overwrite an existing one. If it
+     does not exist, copy .env.example to .env.local and replace sample
+     values with your own local settings.
+  4. Set the environment values described below.
+  5. Start MongoDB if using a local MongoDB installation.
+  6. Start the development server:
+       npm run dev
+  7. Open:
+       http://localhost:3000
+  8. Stop the development server with Ctrl+C in its terminal.
+
+The app's default local database URI is:
+  mongodb://127.0.0.1:27017/bookhaven
+
+If using MongoDB Atlas, use the connection URI from your Atlas database
+instead. Make sure the database user and network access settings allow the
+application to connect.
+
+Environment variables:
+  MONGODB_URI
+    MongoDB connection URI. Local MongoDB is used as a fallback if this is
+    omitted, but a working database is needed for account and order features.
+
+  JWT_SECRET
+    Secret used to sign login tokens. Set a new, long, random value for each
+    real deployment. Do not use a sample/default value in production.
+
+  RESEND_API_KEY
+    Secret Resend API key. Required for real verification and password-reset
+    email delivery. Keep it server-side in .env.local or deployment secrets.
+
+  RESEND_FROM_EMAIL
+    Sender address used in emails. The code defaults to
+    onboarding@resend.dev. Resend may restrict test-sender delivery; verify a
+    domain/address in Resend for normal delivery and configure that sender.
+
+  GOOGLE_BOOKS_API_KEY
+    Optional Google Books API key. The Google Books catalog route can make
+    requests without it, subject to Google's limits and API behavior.
+
+After changing .env.local, restart `npm run dev`. Next.js reads environment
+variables when the server starts.
+
+Local checks:
+  npx tsc --noEmit
+    Type-checks the TypeScript source without creating build output.
+
+  npm run build
+    Creates an optimized production build and checks compilation/types.
+
+There is no test script configured in package.json at the time this guide was
+written.
+
+
+5. NORMAL CUSTOMER FLOWS
+------------------------
+
+A. Browse the curated bookstore
+  1. Open the home page.
+  2. The browser requests GET /api/books.
+  3. The server connects to MongoDB. If the books collection is empty, the
+     initial curated books are inserted.
+  4. The UI displays the results. Search, genre, price, and sort filters are
+     applied in the browser.
+  5. Selecting a book opens its detail view.
+
+B. Browse the public archive
+  1. Choose "Classic Archive" in the navigation.
+  2. Choose a catalog source (Gutendex, Open Library, or Google Books) and
+     search/filter.
+  3. The browser calls the matching /api/catalog/... route.
+  4. The Next.js server calls that external provider and returns results.
+  5. Scrolling loads additional pages when the provider has more results.
+  Public archive entries come from external providers, not the curated
+  MongoDB inventory.
+
+C. Create an account and verify the email
+  1. Submit name, email, and password in the sign-up form.
+  2. POST /api/auth/signup validates the fields and creates an account in
+     MongoDB. The password is stored as a bcrypt hash, not plain text.
+  3. The server generates a six-digit verification code and asks Resend to
+     send it to the account email. The code expires after 10 minutes.
+  4. Enter the code in the app. POST /api/auth/verify-email checks the
+     account, code, and expiration.
+  5. On success, the account is marked verified and a JWT is returned.
+     The browser stores the user and token in local storage.
+  6. If email delivery fails, the account may still be created; configure
+     Resend and use the verification screen's resend action to try again.
+
+D. Sign in
+  1. Submit email and password.
+  2. POST /api/auth/login looks up the user in MongoDB and checks the
+     password against the stored bcrypt hash.
+  3. A verified account receives a JWT valid for seven days.
+  4. An unverified account is sent a fresh verification code and must verify
+     before using verified-account features.
+
+E. Forgot password
+  1. Select "Forgot password?" and enter the account email.
+  2. POST /api/auth/forgot-password creates a separate six-digit reset code
+     and sends it to that email via Resend.
+  3. Enter the emailed code and a new password in the reset screen.
+  4. POST /api/auth/reset-password verifies the code and its 10-minute
+     expiration before changing the bcrypt password hash.
+  5. The code is cleared after successful use; return to sign-in.
+  Knowing an email address alone is not sufficient to change its password.
+
+F. Cart, wishlist, and checkout
+  1. Cart actions require a signed-in, email-verified user in the interface.
+  2. Cart and wishlist state are kept in browser local storage, so they
+     persist in that browser. They are not shared across browsers/devices.
+  3. The cart limits quantity based on the displayed book stock.
+  4. Checkout sends the cart/customer details to POST /api/orders.
+  5. The server saves an order with a generated ID, queue position, and
+     "Pending" status. For a signed-in request with a valid bearer JWT, it
+     also attempts to add the purchase to the user's purchase history.
+  6. On success, the browser clears the cart.
+  There is no payment step. The current order API does not reduce inventory
+  stock or reserve items.
+
+G. Store dashboard
+  The dashboard displays inventory and order information, allows adding
+  books, and can update an order status. The interface shows the dashboard
+  link for admin-role users. See the production notes below: server-side
+  authorization for management APIs is not complete.
+
+
+6. API ROUTE QUICK REFERENCE
+----------------------------
+These are application endpoints, not external provider URLs.
+
+Authentication:
+  POST /api/auth/signup
+    Create an account and send its verification code.
+
+  POST /api/auth/login
+    Check credentials; returns a JWT for a verified user.
+
+  POST /api/auth/verify-email
+    Verify an email code; returns the verified user and JWT.
+
+  POST /api/auth/resend-code
+    Send a new email-verification code.
+
+  POST /api/auth/forgot-password
+    Send a password-reset code to the account email.
+
+  POST /api/auth/reset-password
+    Validate the reset code and set a new password.
+
+  GET /api/auth/profile
+    Requires an Authorization: Bearer <token> header; returns the user's
+    profile and purchase history.
+
+  GET /api/auth/seed
+    Seeds demo accounts. This is a development convenience, not a safe
+    production endpoint; see the security notes below.
+
+  GET /api/auth/inbox
+    Currently a simulated in-memory email-dispatch endpoint. It is not a
+    Resend inbox and does not retrieve email from Resend.
+
+Books and orders:
+  GET /api/books
+    List curated MongoDB books. Supports search and genre query parameters.
+
+  GET /api/books?isbn=<isbn>
+    Look up a curated book by ISBN.
+
+  POST /api/books
+    Add a curated book.
+
+  GET /api/orders
+    List orders in queue order.
+
+  POST /api/orders
+    Create an order.
+
+  PATCH /api/orders
+    Change an order status.
+
+External catalogs:
+  GET /api/catalog/gutendex
+  GET /api/catalog/openlibrary
+  GET /api/catalog/google
+    Server-side forwarding/search endpoints for the respective public
+    catalog providers.
+
+
+7. DATA AND STATE: WHAT IS SAVED WHERE?
+---------------------------------------
+MongoDB:
+  User records (including password hash and verification/reset code fields),
+  curated books, orders, and purchase history.
+
+Browser local storage:
+  Signed-in user display data, JWT, cart contents, and wishlist IDs.
+  Clearing browser storage signs out that browser and clears its local cart
+  and wishlist; MongoDB records are not deleted by doing this.
+
+React context (temporary UI state):
+  Current selected book, open drawer/modal, current filters, current page
+  view, and other in-memory UI state. A page refresh resets most of this
+  temporary state.
+
+Resend:
+  Receives outgoing email requests. Actual delivery depends on the Resend
+  API key, sender configuration, recipient restrictions, and provider
+  availability.
+
+
+8. FILES TO READ WHEN CHANGING A FEATURE
+----------------------------------------
+Curated catalog or inventory:
+  src/components/BookCard.tsx
+  src/components/FilterBar.tsx
+  src/components/AdminPanel.tsx
+  src/context/BookStoreContext.tsx
+  src/app/api/books/route.ts
+  src/models/Book.ts
+  src/data/initialBooks.ts
+
+Cart or checkout:
+  src/components/CartDrawer.tsx
+  src/components/CheckoutModal.tsx
+  src/context/BookStoreContext.tsx
+  src/app/api/orders/route.ts
+  src/models/Order.ts
+
+Sign-up, sign-in, email, or password reset:
+  src/components/AuthModal.tsx
+  src/context/BookStoreContext.tsx
+  src/app/api/auth/
+  src/lib/authStore.ts
+  src/lib/resend.ts
+  src/lib/jwt.ts
+  src/models/User.ts
+
+Public archive:
+  src/components/InfiniteCatalog.tsx
+  src/app/books/page.tsx
+  src/app/api/catalog/
+
+
+9. KNOWN LIMITATIONS AND SAFETY NOTES
+--------------------------------------
+Read these before putting this application on the public internet:
+
+  - The demo seed route, GET /api/auth/seed, creates predictable demo
+    accounts and returns their demo credentials. It must not be publicly
+    available in a production deployment.
+
+  - The books and orders management routes do not enforce an admin role on
+    the server. Hiding a dashboard link in the UI is not security. Add
+    server-side authorization before treating these routes as protected.
+
+  - The order API currently accepts order data from the request and does not
+    charge payment, reserve/decrement stock, or validate prices against the
+    database. Do not treat it as a production commerce checkout.
+
+  - The simulated email inbox (/api/auth/inbox and EmailInboxDrawer) is not
+    connected to Resend. Real email is sent by src/lib/resend.ts and should
+    be checked in the recipient's mailbox or Resend dashboard. Do not expect
+    real Resend messages or codes to appear in the simulated inbox.
+
+  - The JWT and account details are stored in browser local storage. This
+    is convenient for a learning project; a production app should review its
+    authentication/session design and XSS protections.
+
+  - The public archive depends on external APIs. Search results, rate limits,
+    and uptime can vary.
+
+  - Some older README statements may not exactly describe the current
+    source. Use the actual src/ implementation as the source of truth when
+    behavior differs.
+
+
+10. SHORT GLOSSARY
+------------------
+API route:
+  Server URL that accepts a request from the browser and returns data.
+
+Environment variable:
+  A setting supplied to the server at startup, often used for secrets or
+  service URLs.
+
+JWT:
+  A signed token used to show that a user has logged in.
+
+Model/schema:
+  The shape and rules for a kind of MongoDB record.
+
+OTP/code:
+  A one-time verification number sent to the user's email.
+
+Route handler:
+  The server-side function that processes an API request.
+
+Local storage:
+  Browser storage for small values belonging to that browser.
+
+Resend sender:
+  The address shown in the From field of an outgoing email. A real sending
+  domain/address may need verification in Resend.
+
+
+11. QUICK FIRST-RUN CHECKLIST
+-----------------------------
+[ ] Node.js and npm are installed.
+[ ] Dependencies are installed with npm install.
+[ ] MongoDB is running or an Atlas URI is configured.
+[ ] .env.local has the correct MONGODB_URI and a private JWT_SECRET.
+[ ] Resend API key and sender are configured if testing email.
+[ ] Development server starts with npm run dev.
+[ ] Home page opens at http://localhost:3000.
+[ ] A test sign-up email arrives and its code verifies.
+[ ] Password reset code arrives and permits a password change.
+[ ] Build passes with npm run build.
+[ ] Secrets are not committed or shared.
+
+End of guide.
